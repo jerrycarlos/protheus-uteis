@@ -1,0 +1,590 @@
+#Include "tlpp-core.th"
+#Include "tlpp-rest.th"
+#Include 'Totvs.ch'
+#Include 'tbiconn.ch'
+#Include 'topconn.ch'
+#INCLUDE 'Protheus.CH'
+#INCLUDE 'FWMVCDEF.CH'
+
+
+
+
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+description
+@author  Jerry Junior
+@since   24/02/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
+@Get( endpoint="banco-conhecimento/consulta/:entidade", description="Listar registros no banco de conhecimento por entidade e/ou filent=?&nomearquivo=?&extensao=?&campos=?,?,?")
+User Function REST01()
+    local cReturn      := ""
+    local jQueryString := Nil 
+    local jPathParams := Nil 
+    local jBody     := Nil
+    local jReturn   := JsonObject():New()
+    local jData     := Nil
+    local aCampos   := {}
+    local i, cAlias
+    local aExtensao := {}
+    local cExtensao := ''
+    local cNomeArq  := ''
+    local cDirDoc   := GetNewPar("MV_DIRDOC") + '\co' + cEmpAnt
+    local cDirArq   := cDirDoc
+    local cFilEnt   := ''
+    jPathParams := oRest:getPathParamsRequest()
+    jQueryString := oRest:getQueryRequest()
+    cBody := oRest:getBodyRequest()
+
+    If ! oRest:setKeyHeaderResponse("Content-Type", "application/json")
+        Conout("Erro ao setar text na chave content-type")
+        If !oRest:appendKeyHeaderResponse("Content-Type", "application/json")
+            cRet := "Erro ao setar text na chave content-type"
+        EndIf
+    EndIf
+
+    if ( !empty( cBody ) )
+
+        // Transforma em JSON
+        jBody := JsonObject():new()
+        jBody:fromJson( cBody )
+
+        if ( jBody <> Nil )
+            cCode := jBody:GetJsonText("code")
+        endif
+    endif
+
+    if ( jQueryString <> Nil )
+        cReturn += "Parâmetros capturados: [" + jQueryString:ToJSon() + "]"
+        if jQueryString:hasProperty('campos')
+            aCampos := FWFormStruct(1, 'SB1', {|x| alltrim(x) $ jQueryString['campos']}):aFields
+        endif
+        
+        if jQueryString:hasProperty('extensao')
+            aExtensao := StrTokArr2(jQueryString['extensao'], ',')
+        endif
+        
+        if jQueryString:hasProperty('nomearquivo')
+            cNomeArq := jQueryString['nomearquivo']
+        endif
+
+        if jQueryString:hasProperty('filent')
+            cFilEnt := jQueryString['filent']
+            cFilAnt := cFilEnt
+            cDirArq := cDirDoc + '\br' + cFilEnt + '\'
+        else
+            cDirArq := cDirDoc + '\shared\'
+        endif
+    endif
+    
+    if jPathParams <> Nil
+        cAlias := jPathParams['entidade']
+        cQuery := " SELECT R_E_C_N_O_ as RECNO FROM "  + RetSqlName('AC9') + " AC9"
+        cQuery += " WHERE AC9.D_E_L_E_T_ <> '*'"
+        cQuery += " AND AC9_ENTIDA = '" + cAlias + "'"
+        if !Empty(cFilEnt)
+            cQuery += " AND AC9_FILIAL = '" + cFilEnt + "'"
+        endif
+        
+        if Select('QAC9') > 0
+            QAC9->(dbclosearea())
+        endif
+        
+        TcQuery cQuery New Alias 'QAC9'
+        
+        jReturn['data'] := {}
+        (cAlias)->(dbSetOrder(1))
+        while QAC9->(!Eof())
+            AC9->(DBGoTo(QAC9->RECNO))
+            cAC9_CODENT := Alltrim(AC9->AC9_CODENT)
+            nPos := aScan(jReturn['data'], {|x| x['AC9_CODENT'] == cAC9_CODENT})
+            jObjeto := JsonObject():New()
+            jObjeto['ACB_CODOBJ'] := Alltrim(AC9->AC9_CODOBJ)
+            jObjeto['ACB_OBJETO'] := ''
+            jObjeto['ACB_DESCRI'] := ''
+            jObjeto['extensao'] := ''
+            //jObjeto['base64'] := ''
+            if ACB->(dbSeek(AC9->(AC9_FILIAL+AC9_CODOBJ)))
+                cExtensao := Right(Alltrim(ACB->ACB_OBJETO), 4)
+                cExtensao := iif(Left(cExtensao,1)=='.', Right(cExtensao,3), cExtensao)
+                //se extensao nao esta na relacao do filtro, passa
+                if Len(aExtensao) > 0 .And. !(aScan(aExtensao, {|x| lower(x) == lower(cExtensao)}) > 0)
+                    QAC9->(dbSkip())
+                    loop
+                elseif !Empty(cNomeArq) .And. !(cNomeArq $ alltrim(ACB->ACB_OBJETO))
+                    QAC9->(dbSkip())
+                    loop
+                endif
+
+                if Empty(cFilEnt) .and. !Empty(xFilial('AC9'))
+                    cDirArq := cDirDoc + '\br' + cFilAnt + '\'
+                endif
+
+                if Empty(cFilEnt) .and. !Empty(AC9->AC9_FILIAL)
+                    cDirArq := cDirDoc + '\br' + AC9->AC9_FILIAL + '\'
+                endif
+
+                //Verifica se arquivo fisico existe no diretorio
+                cArquivo := cDirArq + alltrim(ACB->ACB_OBJETO)
+                jObjeto['extensao'] := lower(cExtensao)
+                if File(cArquivo)
+                    jObjeto['ACB_OBJETO'] := Alltrim(ACB->ACB_OBJETO)
+                    jObjeto['ACB_DESCRI'] := Alltrim(ACB->ACB_DESCRI)
+                    //oFile     := nil
+                    //oFile     := FwFileReader():New(cArquivo) 
+//
+                    ////tenta abri o arquivo iformado no paramentro
+                    //If (oFile:Open())
+                    //    cFile := oFile:FullRead() // EFETUA A LEITURA DO ARQUIVO
+                    //    jObjeto['base64'] := Encode64(cFile)
+                    //else
+                    //    jObjeto['base64'] := 'Erro ao abrir arquivo'
+                    //endif
+                else//Caso arquivo nao exista fisicamente
+                    jObjeto['ACB_OBJETO'] := alltrim(ACB->ACB_OBJETO)
+                    jObjeto['ACB_DESCRI'] := 'Arquivo não existe no diretório: ' + cDirArq
+                endif
+            else
+                jObjeto['ACB_OBJETO'] := ''
+                jObjeto['ACB_DESCRI'] := 'Objeto não encontrado na tabela ACB'
+            endif
+
+            //Se ja existir a entidade no jReturn, adiciona as infos do novo objeto
+            if nPos > 0
+                aAdd(jReturn['data'][nPos]['objeto'], jObjeto)
+            else//Cria uma nova entidade para o jReturn
+                jData := JsonObject():New()
+                jData['AC9_FILIAL'] := AC9->AC9_FILIAL
+                jData['AC9_CODENT'] := cAC9_CODENT
+                jData['diretorio'] := cDirArq
+                jData["objeto"] := {}
+                aAdd(jData["objeto"], jObjeto)
+                jData['campos'] := {}
+                For i:=1 to Len(aCampos)
+                    aCampo := aCampos[i]
+                    jCampo := JsonObject():New()
+                    jCampo['campo'] := alltrim(aCampo[3])
+                    jCampo['descricao'] := alltrim(aCampo[2])
+                    jCampo['valor'] := Posicione(cAlias, 1, AC9->(AC9_FILIAL+AC9_CODENT), alltrim(aCampo[3]))
+                    aAdd(jData['campos'], jCampo)
+                Next
+                aAdd(jReturn['data'], jData)
+            endif
+            QAC9->(dbSkip())
+        enddo
+        
+    endif
+
+    oRest:setResponse( jReturn )
+Return
+
+@Get( endpoint="banco-conhecimento/consulta/:entidade/:chave", description="Listar registros no banco de conhecimento por entidade e chave (AC9_CODENT) e/ou extensao=?")
+User Function REST02()
+    local cReturn      := ""
+    local jQueryString := Nil 
+    local jPathParams := Nil 
+    local jBody     := Nil
+    local jReturn   := JsonObject():New()
+    local jData     := Nil
+    local aCampos   := {}
+    local i, cAlias
+    jPathParams := oRest:getPathParamsRequest()
+    jQueryString := oRest:getQueryRequest()
+    cBody := oRest:getBodyRequest()
+
+    If ! oRest:setKeyHeaderResponse("Content-Type", "application/json")
+        Conout("Erro ao setar text na chave content-type")
+        If !oRest:appendKeyHeaderResponse("Content-Type", "application/json")
+            cRet := "Erro ao setar text na chave content-type"
+        EndIf
+    EndIf
+
+    if ( !empty( cBody ) )
+
+        // Transforma em JSON
+        jBody := JsonObject():new()
+        jBody:fromJson( cBody )
+
+        if ( jBody <> Nil )
+            cCode := jBody:GetJsonText("code")
+        endif
+    endif
+
+    if ( jQueryString <> Nil )
+        cReturn += "Parâmetros capturados: [" + jQueryString:ToJSon() + "]"
+        if jQueryString:hasProperty('campos')
+            aCampos := FWFormStruct(1, 'SB1', {|x| alltrim(x) $ jQueryString['campos']}):aFields
+        endif
+    endif
+    
+    if jPathParams <> Nil
+        cAlias := jPathParams['entidade']
+        cQuery := " SELECT R_E_C_N_O_ as RECNO FROM "  + RetSqlName('AC9') + " AC9"
+        cQuery += " WHERE AC9.D_E_L_E_T_ <> '*'"
+        cQuery += " AND AC9_ENTIDA = '" + cAlias + "'"
+
+        
+        If Select('QAC9') > 0
+            QAC9->(dbclosearea())
+        EndIf
+        
+        TcQuery cQuery New Alias 'QAC9'
+        
+        jReturn['data'] := {}
+        (cAlias)->(dbSetOrder(1))
+        While QAC9->(!Eof())
+            AC9->(DBGoTo(QAC9->RECNO))
+            cAC9_CODENT := Alltrim(AC9->AC9_CODENT)
+            ACB->(dbSeek(AC9->(AC9_FILIAL+AC9_CODOBJ)))
+            
+            jObjeto := JsonObject():New()
+            jObjeto["ACB_CODOBJ"] := Alltrim(ACB->ACB_CODOBJ)
+            jObjeto["ACB_OBJETO"] := Alltrim(ACB->ACB_OBJETO)
+            jObjeto["ACB_DESCRI"] := Alltrim(ACB->ACB_DESCRI)
+
+            nPos := aScan(jReturn['data'], {|x| x['AC9_CODENT'] == cAC9_CODENT})
+            if nPos > 0
+                aAdd(jReturn['data'][nPos]['objeto'], jObjeto)
+            else
+                jData := JsonObject():New()
+                jData["AC9_CODENT"] := cAC9_CODENT
+                
+                jData['campos'] := {}
+                For i:=1 to Len(aCampos)
+                    aCampo := aCampos[i]
+                    jCampo := JsonObject():New()
+                    jCampo['campo'] := alltrim(aCampo[3])
+                    jCampo['descricao'] := alltrim(aCampo[2])
+                    jCampo['valor'] := Posicione(cAlias, 1, AC9->(AC9_FILIAL+AC9_CODENT), alltrim(aCampo[3]))
+                    aAdd(jData['campos'], jCampo)
+                Next
+                jData["objeto"] := {}
+                aAdd(jData["objeto"], jObjeto)
+                aAdd(jReturn['data'], jData)
+            endif
+            QAC9->(dbSkip())
+        EndDo
+        
+    endif
+
+    oRest:setResponse( jReturn )
+Return
+
+
+@Get( endpoint="banco-conhecimento/consulta/schemasql", description="Get da estrutura dos campos solicitados. campos=?,?,?,?")
+User Function REST03()
+    local jReturn      := JsonObject():New()
+    local jQueryString := Nil 
+    local jPathParams := Nil 
+    local jBody     := Nil
+    local cBody   := ""
+
+    If ! oRest:setKeyHeaderResponse("Content-Type", "application/json")
+        Conout("Erro ao setar text na chave content-type")
+        If !oRest:appendKeyHeaderResponse("Content-Type", "application/json")
+            cRet := "Erro ao setar text na chave content-type"
+        EndIf
+    EndIf
+
+    jPathParams := oRest:getPathParamsRequest()
+    jQueryString := oRest:getQueryRequest()
+
+    cBody := oRest:getBodyRequest()
+
+    if ( !empty( cBody ) )
+
+        cReturn += "Parâmetros capturados: [" + cBody + "]"
+
+        // Transforma em JSON
+        jBody := JsonObject():new()
+        jBody:fromJson( cBody )
+
+        if ( jBody <> Nil )
+            cCode := jBody:GetJsonText("code")
+        endif
+    endif
+    
+    if jPathParams <> Nil
+        
+    else
+        jReturn['result'] := ''
+    endif
+
+    if ( jQueryString <> Nil )
+        cReturn += "Parâmetros capturados: [" + jQueryString:ToJSon() + "]"
+    endif
+
+    oRest:setResponse( jReturn )
+Return
+
+
+@Get( endpoint="banco-conhecimento/base64/download/:objeto", description="Download do arquivo formato base64 [filtro: filent=?]")
+User Function REST04()
+    local cReturn      := ""
+    local jQueryString := Nil 
+    local jPathParams := Nil 
+    local jBody     := Nil
+    local cBody   := ""
+    local cDirDoc   := GetNewPar("MV_DIRDOC") + '\co' + cEmpAnt
+    local cDirArq   := cDirDoc
+    local cFilEnt   := xFIlial('ACB')
+    local jReturn   := JsonObject():New()
+    local cObjeto   := ''
+
+    If ! oRest:setKeyHeaderResponse("Content-Type", "application/json")
+        Conout("Erro ao setar text na chave content-type")
+        If !oRest:appendKeyHeaderResponse("Content-Type", "application/json")
+            cRet := "Erro ao setar text na chave content-type"
+        EndIf
+    EndIf
+
+    jPathParams := oRest:getPathParamsRequest()
+    jQueryString := oRest:getQueryRequest()
+
+    cBody := oRest:getBodyRequest()
+
+    if ( !empty( cBody ) )
+
+        cReturn += "Parâmetros capturados: [" + cBody + "]"
+
+        // Transforma em JSON
+        jBody := JsonObject():new()
+        jBody:fromJson( cBody )
+
+        if ( jBody <> Nil )
+            cCode := jBody:GetJsonText("code")
+        endif
+    endif
+    
+    if jPathParams <> Nil
+        cReturn += "Parâmetros capturados: [" + jPathParams:ToJSon() + "]"
+    endif
+
+    if ( jQueryString <> Nil )
+        cReturn += "Parâmetros capturados: [" + jQueryString:ToJSon() + "]"
+    endif
+
+    if jPathParams:hasProperty('objeto')
+        cObjeto := jPathParams['objeto']
+    endif
+    
+    if jQueryString:hasProperty('filent')
+        cFilEnt := jQueryString['filent']
+        cFilAnt := cFilEnt
+        cDirArq := cDirDoc + '\br' + cFilEnt + '\'
+    else
+        cDirArq := cDirDoc + '\shared\'
+    endif
+
+    jReturn['result'] := JsonObject():New()
+    jReturn['result']['nomearquivo'] := ''
+    jReturn['result']['diretorio'] := cDirArq
+    jReturn['result']['base64']      := ''
+    if ACB->(dbSeek(cFilEnt + cObjeto))
+        if Empty(cFilEnt) .and. !Empty(xFilial('ACB'))
+            cDirArq := cDirDoc + '\br' + cFilAnt + '\'
+        endif
+
+        if Empty(cFilEnt) .and. !Empty(ACB->ACB_FILIAL)
+            cDirArq := cDirDoc + '\br' + ACB->ACB_FILIAL + '\'
+        endif
+
+        //Verifica se arquivo fisico existe no diretorio
+        cArquivo := cDirArq + alltrim(ACB->ACB_OBJETO)
+        if File(cArquivo)
+            oFile     := nil
+            oFile     := FwFileReader():New(cArquivo) 
+            If (oFile:Open())
+                cFile := oFile:FullRead() // EFETUA A LEITURA DO ARQUIVO
+                jReturn['result']['nomearquivo'] := alltrim(ACB->ACB_OBJETO)
+                jReturn['result']['base64']      := Encode64(cFile)
+            else
+                jReturn['result']['nomearquivo'] := alltrim(ACB->ACB_OBJETO)
+                jReturn['result']['base64']      := 'Erro ao abrir arquivo'
+            endif
+        else
+            jReturn['result']['nomearquivo'] := 'Arquivo não existe no diretório: ' + cDirArq
+        endif
+    else
+        if Empty(cFilEnt) .and. !Empty(xFilial('ACB'))
+            jReturn['result']['nomearquivo'] := 'Tabela ACB em modo exclusivo, envie o codigo de busca da filial'
+        else
+            jReturn['result']['nomearquivo'] := 'Objeto não encontrado na tabela ACB'
+        endif
+    endif
+    oRest:setResponse( jReturn )
+Return
+
+
+@Get( endpoint="banco-conhecimento/consulta/dados/:entidade/:chave", description="Lista campos e valores de uma entidade pela chave. Filtro de indice= e/ou campos=?,?,?,?")
+User Function REST05()
+    local cReturn       := ""
+    local jQueryString  := Nil 
+    local jPathParams   := Nil 
+    local jBody         := Nil
+    local cBody         := ""
+    local cAlias        := ""
+    local cChave        := ""
+    local cCampos       := ""
+    local jReturn       := JsonObject():New()
+
+    jPathParams := oRest:getPathParamsRequest()
+    jQueryString := oRest:getQueryRequest()
+
+    cBody := oRest:getBodyRequest()
+
+    if ( !empty( cBody ) )
+
+        cReturn += "Parâmetros capturados: [" + cBody + "]"
+
+        // Transforma em JSON
+        jBody := JsonObject():new()
+        jBody:fromJson( cBody )
+
+        if ( jBody <> Nil )
+            cCode := jBody:GetJsonText("code")
+        endif
+    endif
+    
+    if jPathParams <> Nil
+        cAlias := jPathParams['entidade']
+        cChave := jPathParams['chave']
+    endif
+
+    if ( jQueryString <> Nil ) .and. jQueryString:hasProperty('campos')
+       cCampos := jQueryString['campos']
+    endif
+
+        oAlias := Entidade():New(cAlias)
+    If oAlias:BuscaRegistro(cChave)
+        jReturn := oAlias:GetStruct(cCampos)
+    Else
+        jReturn['data'] := "Registro não encontrado na entidade seleciona: " + cAlias
+    EndIf
+
+    oRest:setResponse( jReturn )
+Return
+
+User Function onError( oError as object )
+    local cCodeTrace    := "900"
+    local cFault        := '' as character
+    
+    //oError:genCode
+    //oError:description 
+
+    cFault += '{'
+    cFault += '"code_interno":"' + cCodeTrace + '",'
+    cFault += '"errorcode":"' + oError:genCode + '",'
+    cFault += '"message":"um erro interno ocorreu, procure o administrador do sistema"'
+    cFault += '}'
+
+    memowrite("REST01_erro"+fwtimestamp(1)+'.txt', cFault + iif( type('oRest') == 'O', oRest:toJSON(), ''))
+    if ( type('oRest') == 'O' )
+        oRest:SetFault( cFault )
+    endif
+
+return Nil
+
+
+
+Class Entidade
+    private data cAlias as character
+    private data campos as array
+    public method New(cAlias)
+    public method BuscaRegistro(cChave) as logical
+    public method GetStruct(cCampos) as object
+End Class
+
+Method New(cAlias) Class Entidade
+    ::cAlias := cAlias
+Return self
+
+Method BuscaRegistro(cChave) Class Entidade
+    Local lRet := .F.
+    Local cAlias := ::cAlias
+
+    (cAlias)->(dbSetOrder(1))
+    lRet := (cAlias)->(dbSeek(cChave))
+
+Return lRet
+
+Method GetStruct(cCampos) Class Entidade
+    Local jDados := JsonObject():New()
+    Local jCampo := JsonObject():New()
+    Local cAlias := ::cAlias
+    Local i
+    aCampos := FWFormStruct(1, cAlias, {|x| iif(!Empty(cCampos), alltrim(x) $ cCampos, .T.) }, , .F.):aFields
+    jDados['data'] := {}
+    For i:=1 to Len(aCampos)
+        cDescricao := Alltrim(aCampos[i][2])
+        cCampo   := Alltrim(aCampos[i][3])
+        cTipo    := Alltrim(aCampos[i][4])
+        nTamanho := Alltrim(aCampos[i][5])
+        nDecimal := Alltrim(aCampos[i][6])
+        xValor := (cAlias)->&(cCampo)
+        jCampo := JsonObject():New()
+        jCampo['campo'] := cCampo
+        jCampo['descricao'] := cDescricao
+        jCampo['valor'] := convertVal(cCampo, xValor)
+        jCampo['tipo'] := convertTipo(cTipo, nDecimal)
+        jCampo['tamanho'] := nTamanho
+        jCampo['decimal'] := nDecimal
+        aAdd(jDados['data'], jCampo)
+    Next
+Return jDados
+
+
+Static Function convertVal(cCampo, xVal)
+    Local xRet := ""
+
+    If ValType(xVal) == "N"
+        xRet := cvaltochar(xVal)
+    ElseIf ValType(xVal) == "D"
+        xRet := DtoC(xVal)
+    Else
+        xRet := U_X3_CBOX(cCampo, xVal)
+        If Empty(xRet)
+            xRet := Alltrim(xVal)
+        Endif    
+    EndIf
+Return xRet
+
+Static Function convertTipo(cTipoADVPL, nDecimal)
+    Local cTipoTS := ''
+    Do Case
+        Case cTipoADVPL $ "C,M"
+            cTipoTS := "string"
+        Case cTipoADVPL == "D"
+            cTipoTS := "date"
+        Case cTipoADVPL == "N"
+            cTipoTS := "number"
+        Case cTipoADVPL == "N" .And. nDecimal > 0
+            cTipoTS := "decimal"
+        Case cTipoADVPL == "L"
+            cTipoTS := "boolean"
+        OtherWise
+            cTipoTS := ""
+    EndCase
+
+Return cTipoTS
+
+
+User Function X3_CBOX(cCampo, cChave)
+    Local cRet := ""
+    Local cCombo := GetSx3Cache(cCampo,"X3_CBOX")
+    //Em caso de combobox dinamica, exemplo: #U_OPCOES()
+    If Left(cCombo,1) == "#"
+        cCombo := &(SUBSTR(cCombo, 2))
+    EndIf
+    If !Empty(cCombo)
+        aCombo := RetSX3Box(cCombo,,,TamSX3(cCampo)[1])
+        If Len(aCombo) > 0
+            If (nPosCombo := aScan(aCombo, {|x| x[2] == cChave })) > 0
+                cRet := Alltrim(aCombo[nPosCombo][3])
+            EndIf
+        EndIf
+    EndIf
+Return cRet
