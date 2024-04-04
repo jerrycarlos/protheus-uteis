@@ -95,6 +95,7 @@ User Function REST01()
         
         TcQuery cQuery New Alias 'QAC9'
         
+        jReturn['code'] := "201"
         jReturn['data'] := {}
         (cAlias)->(dbSetOrder(1))
         while QAC9->(!Eof())
@@ -156,6 +157,7 @@ User Function REST01()
             if nPos > 0
                 aAdd(jReturn['data'][nPos]['objeto'], jObjeto)
             else//Cria uma nova entidade para o jReturn
+                jReturn['code'] := "200"
                 jData := JsonObject():New()
                 jData['AC9_FILIAL'] := AC9->AC9_FILIAL
                 jData['AC9_CODENT'] := cAC9_CODENT
@@ -458,10 +460,12 @@ User Function REST05()
        cCampos := jQueryString['campos']
     endif
 
-        oAlias := Entidade():New(cAlias)
+    oAlias := Entidade():New(cAlias)
     If oAlias:BuscaRegistro(cChave)
-        jReturn := oAlias:GetStruct(cCampos)
+        jReturn['code'] := "200"
+        jReturn['data'] := oAlias:GetStruct(cCampos)
     Else
+        jReturn['code'] := "201"
         jReturn['data'] := "Registro não encontrado na entidade seleciona: " + cAlias
     EndIf
 
@@ -512,18 +516,17 @@ Method BuscaRegistro(cChave) Class Entidade
 Return lRet
 
 Method GetStruct(cCampos) Class Entidade
-    Local jDados := JsonObject():New()
+    Local aDados := {}
     Local jCampo := JsonObject():New()
     Local cAlias := ::cAlias
     Local i
     aCampos := FWFormStruct(1, cAlias, {|x| iif(!Empty(cCampos), alltrim(x) $ cCampos, .T.) }, , .F.):aFields
-    jDados['data'] := {}
     For i:=1 to Len(aCampos)
         cDescricao := Alltrim(aCampos[i][2])
         cCampo   := Alltrim(aCampos[i][3])
         cTipo    := Alltrim(aCampos[i][4])
-        nTamanho := Alltrim(aCampos[i][5])
-        nDecimal := Alltrim(aCampos[i][6])
+        nTamanho := aCampos[i][5]
+        nDecimal := aCampos[i][6]
         xValor := (cAlias)->&(cCampo)
         jCampo := JsonObject():New()
         jCampo['campo'] := cCampo
@@ -532,9 +535,9 @@ Method GetStruct(cCampos) Class Entidade
         jCampo['tipo'] := convertTipo(cTipo, nDecimal)
         jCampo['tamanho'] := nTamanho
         jCampo['decimal'] := nDecimal
-        aAdd(jDados['data'], jCampo)
+        aAdd(aDados, jCampo)
     Next
-Return jDados
+Return aDados
 
 
 Static Function convertVal(cCampo, xVal)
@@ -543,7 +546,7 @@ Static Function convertVal(cCampo, xVal)
     If ValType(xVal) == "N"
         xRet := cvaltochar(xVal)
     ElseIf ValType(xVal) == "D"
-        xRet := DtoC(xVal)
+        xRet := Transform(DtoS(xVal), "@R XXXX-XX-XX")
     Else
         xRet := U_X3_CBOX(cCampo, xVal)
         If Empty(xRet)
