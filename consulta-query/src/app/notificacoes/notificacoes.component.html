@@ -1,0 +1,42 @@
+<div class="po-wrapper">
+    <po-toolbar p-title="Controle de Multas"></po-toolbar> 
+    <po-page-list
+    [p-actions]="pageactions"  
+    [p-filter]="filtroconfig"
+      p-title="Listagem geral de Notificações">
+      <po-table                        
+      p-show-more="true"  
+      p-container="shadow"
+        p-sort="true"
+        p-striped="true"
+        [p-loading]="carregando"
+        [p-columns]="colnotificacoes"
+        [p-items]="dadosnotificacoes">
+      </po-table>
+  </po-page-list>
+</div>
+  
+<po-modal #optionsForm p-title="Filtro por data" [p-primary-action]="confirm" [p-secondary-action]="close" >
+  <form #modalForm="ngForm">
+    <div class="po-row">
+      <po-datepicker
+        class="po-md-6"
+        name="dataDe"
+        [(ngModel)]="dataDe"
+        p-clean
+        p-label="Data De"
+
+      >
+      </po-datepicker>
+  
+      <po-datepicker
+        class="po-md-6"
+        name="dataAte"
+        [(ngModel)]="dataAte"
+        p-clean
+        p-label="Data Ate"
+      >
+      </po-datepicker>
+    </div>
+  
+  </form>

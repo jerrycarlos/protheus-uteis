@@ -1,0 +1,111 @@
+<div class="po-wrapper">
+    <po-toolbar p-title="Controle de Multas"></po-toolbar> 
+    <po-page-dynamic-search p-title="Painel Geral" [p-filters]="filters" (p-advanced-search)="buscar($event)" >
+
+    
+    <po-widget        
+        class="po-lg-6 po-mb-1"
+        p-title="Veículos">    
+        <div class="po-font-subtitle po-text-center">{{qtdveiculos}}</div>
+        <div class="po-text-center sample-container-dashboard">Quantidade de Veículos Ativos</div>
+    </po-widget>
+
+    <po-widget        
+        class="po-lg-3 po-mb-1"
+        p-title="Média por Veículo">    
+        <div class="po-font-subtitle po-text-center">{{mediaporveiculo}}</div>
+        <div class="po-text-center sample-container-dashboard">Valor Médio de Multa por Veículo</div>
+    </po-widget>
+
+    <po-widget        
+        class="po-lg-3 po-mb-1"
+        p-title="Multa Média">    
+        <div class="po-font-subtitle po-text-center">{{ mediapormes | compactNumber:1 }}</div>
+        <div class="po-text-center sample-container-dashboard">Valor Médio de Multa/Mes</div>
+    </po-widget>
+
+    <po-widget
+        class="po-lg-3 po-mb-1"
+        p-title="Notificações">    
+        <div class="po-font-subtitle po-text-center">{{notificacoesabertas}} </div>
+        <div class="po-text-center sample-container-dashboard">Em aberto</div>
+    </po-widget>
+
+    <po-widget
+        class="po-lg-3 po-mb-1"
+        p-title="Total de Multas(Quantidade)">    
+        <div class="po-font-subtitle po-text-center">{{qtdmultasabertas}} / {{qtdmultaspagas}}</div>
+        <div class="po-text-center sample-container-dashboard">Em aberto / Pagas</div>
+    </po-widget>
+
+    <po-widget        
+        class="po-lg-3 po-mb-1"
+        p-title="Total de Multas(Valor)">    
+        <div class="po-font-subtitle po-text-center">{{ vlrmultasabertas | compactNumber:0 }} / {{vlrmultaspagas}}</div>
+        <div class="po-text-center sample-container-dashboard">Em aberto / Pagas</div>
+    </po-widget>
+
+    <po-widget        
+        class="po-lg-3 po-mb-1"
+        p-title="Vincendo(Valor)">    
+        <div class="po-font-subtitle po-text-center">{{ vlrmultasvincendo | compactNumber:0 }}</div>
+        <div class="po-text-center sample-container-dashboard">Multas vencendo no mês</div>
+    </po-widget>
+
+    <po-widget
+        class="po-lg-6 po-mb-1"
+        p-title="Valor por Mês">
+        <div class="chart-wrapper">
+            <canvas baseChart 
+                width="100%"
+                [datasets]="valorporMesData" 
+                [labels]="valorporMesLocalLabels" 
+                [options]="ChartOptions"
+                [colors]="valorPorMesColors" 
+                [legend]="ChartLegend" 
+                [chartType]="'line'" 
+                [plugins]="[]">
+            </canvas>
+        </div>                
+    </po-widget>
+
+    <po-widget
+        class="po-lg-6 po-mb-1"
+        p-title="Infrações por local">
+        <div class="chart-wrapper">
+            <canvas baseChart 
+                [datasets]="infracaoporLocalData" 
+                [labels]="infracaoporLocalLabels" 
+                [options]="ChartOptions"
+                [colors]="infracaoporLocalColors" 
+                [legend]="ChartLegend" 
+                [chartType]="'bar'" >
+            </canvas>
+        </div>                
+    </po-widget>
+
+    <po-widget
+        class="po-lg-6 po-mb-1"
+        p-title="Top 10 motoristas">
+        <po-table           
+            p-striped="true"
+            [p-columns]="colmotoristas"
+            [p-items]="topmotoristas">
+        </po-table>
+    </po-widget>
+
+    <po-widget
+        class="po-lg-6 po-mb-1"
+        p-title="Top 10 infrações">
+        <po-table           
+            p-striped="true"
+            [p-columns]="colinfracoes"
+            [p-items]="topinfracoes">
+        </po-table>
+    </po-widget>
+
+</po-page-dynamic-search>
+  
+</div>
+
+  

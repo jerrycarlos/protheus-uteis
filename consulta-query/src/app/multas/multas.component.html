@@ -1,0 +1,51 @@
+<po-loading-overlay 
+    [hidden]="!carregando"
+    p-text="carregando" >
+</po-loading-overlay>
+
+<div class="po-wrapper">
+    <po-toolbar p-title="Consulta Query"
+    ></po-toolbar> 
+    
+    <po-page-list         
+    [p-actions]="pageactions"
+    [p-filter]="filtroconfig"
+      p-title="Listagem geral de Multas">
+      <po-textarea
+  [(ngModel)]="consulta"
+  [ngModelOptions]="{standalone: true}">
+</po-textarea>
+<po-modal #optionsForm p-title="Filtro por data" [p-primary-action]="confirm" [p-secondary-action]="close" >
+  <form #modalForm="ngForm"
+  p-height="400"
+  p-width="800"
+  >
+    <div class="po-row">
+      <po-table
+      #tabela
+      p-show-more="true"  
+      p-container="shadow"
+        p-sort="true"
+        p-striped="true"
+        [p-loading]="carregando"
+        [p-columns]="colmultas"
+        [p-items]="dadosmultas">
+      </po-table>
+    </div>
+  </form>
+</po-modal>
+
+<po-modal #popupmodal p-title="Resultado"> 
+  
+    <po-table
+    p-show-more="true"  
+    p-container="shadow"
+    p-sort="true"
+    p-striped="true"
+    [p-loading]="carregando"
+    [p-columns]="colmultas"
+    [p-items]="dadosmultas">
+  </po-table>
+</po-modal>
+  </po-page-list>
+</div>

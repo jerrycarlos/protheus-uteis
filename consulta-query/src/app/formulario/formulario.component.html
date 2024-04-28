@@ -1,0 +1,38 @@
+
+<div class="po-wrapper">
+    
+    <po-toolbar p-title="Controle de Multas"></po-toolbar> 
+
+    <po-page-detail
+        
+    [p-title]="titulo" >
+
+    <po-container>
+        <po-dynamic-form #dynamicForm            
+        [p-validate]="this.onChangeFields.bind(this)"    
+        [p-fields]="campos"
+            [p-value]="dados"
+            >
+        </po-dynamic-form>
+    </po-container>
+   
+    <po-divider></po-divider>
+
+    <div class="po-row">
+        <po-button 
+          class="po-md-2"
+          p-label="Cancelar"          
+          (p-click)="this.voltar()">
+        </po-button>
+        <po-button
+          class="po-md-2"
+          p-label="Salvar"
+          [p-disabled]="dynamicForm?.form.invalid"
+          (p-click)="this.salvar()">
+        </po-button>
+    </div>
+
+</po-page-detail>
+
+</div>
+  
