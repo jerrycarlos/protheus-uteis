@@ -1,0 +1,8 @@
+{
+    "name": "Protheus",
+    "version": "12.23.0",
+    "serverBackend": "http://10.18.0.222:1307/rest",
+    "restEntryPoint": "rest",
+    "versionAPI": "",
+    "dashboardVersion": "1.0.0"
+  }

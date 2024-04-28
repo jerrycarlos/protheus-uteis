@@ -1,0 +1,68 @@
+
+<div id="html" class="po-wrapper">
+    <div class="po-row divFixed">
+        <div id="toobar" class="po-sm-12">
+            <po-container>
+                <div class="po-sm-10">
+                    <div class="po-row">
+                        <div class="po-row">
+                            <po-info
+                                p-label="Tabela: "
+                                class="po-sm-3"
+                                style="height: 44px; margin-bottom: -10px;"
+                                >
+                            </po-info>
+                            <po-search
+                              #inputSearch
+                              class="po-md-6"
+                              p-search-type="trigger"
+                              [p-items]="entidades"
+                              [p-filter-keys]="filterKeys"
+                              (p-filtered-items-change)="filtered($event)"
+                            ></po-search>
+                        </div>
+                        <hr />
+                        <div class="po-row" *ngFor="let entidade of entidadeFiltrada">
+                            <po-info class="po-md-4" p-label="Tabela" [p-value]="entidade.alias"> </po-info>
+                          
+                            <po-info class="po-md-4" p-label="Descricao" [p-value]="entidade.descricao"> </po-info>
+                          </div>
+                    </div>
+                </div>
+                <po-button-group id="groupButton" class="po-sm-2" [p-buttons]="buttons"
+                    style="margin-bottom: -10px;"> </po-button-group>
+            </po-container>
+        </div>
+    </div>
+    <po-loading-overlay [hidden]="!carregando" [p-text]="textAguarde"> </po-loading-overlay>
+    <po-widget #container1 class="po-lg-12 po-mt-2" style="padding-top: -10px">
+        <div class="po-row">
+            <po-table #tableBanco id="tableBanco" p-show-more="true" p-container="border" p-sort="true" p-striped="true" [p-columns]="columns" [p-items]="dadosAC9" class="po-sm-12" p-container="shadow" p-auto-collapse="false" [p-hide-text-overflow]="false"
+            p-actions-right="true" [p-actions]="actions">
+            <ng-template
+                p-table-row-template
+                let-rowItem
+                let-i="rowIndex"
+            >
+            <po-table p-show-more="false" p-container="border" p-sort="true" p-striped="true" [p-columns]="columnsItens" [p-items]="rowItem.objeto"
+            [p-actions]="actionsItem"> 
+            </po-table>
+            </ng-template>
+            </po-table>
+        </div>
+        <po-modal #modalEntidade p-title="Dados Medição" [p-primary-action]="fecharRegistro"
+        >
+            <po-divider
+                p-label="Cabeçalho">
+            </po-divider>
+            <div class="po-row">
+                <po-dynamic-form #dynamicForm 
+                    [p-fields]="fieldsEntidade" 
+                    [p-value]="dadosEntidade" 
+                    class="po-sm-12"
+                >
+                </po-dynamic-form>
+            </div>
+        </po-modal>
+    </po-widget>
+</div>
