@@ -61,9 +61,10 @@ User Function REST00()
     oRest:setResponse( jReturn )
 
 Return
+
 //-------------------------------------------------------------------
 /*/{Protheus.doc} REST01
-description
+Listar registros no banco de conhecimento por entidade e/ou filent=?&nomearquivo=?&extensao=?&campos=?,?,?
 @author  Jerry Junior
 @since   24/02/2024
 @version 1.0
@@ -234,6 +235,15 @@ User Function REST01()
     oRest:setResponse( jReturn )
 Return
 
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+Listar registros no banco de conhecimento por entidade e chave (AC9_CODENT) e/ou extensao=?
+@author  Jerry Junior
+@since   24/02/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
 @Get( endpoint="banco-conhecimento/consulta/:entidade/:chave", description="Listar registros no banco de conhecimento por entidade e chave (AC9_CODENT) e/ou extensao=?")
 User Function REST02()
     local cReturn      := ""
@@ -327,6 +337,15 @@ User Function REST02()
 Return
 
 
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+Get da estrutura dos campos solicitados. campos=?,?,?,?
+@author  Jerry Junior
+@since   25/02/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
 @Get( endpoint="banco-conhecimento/consulta/schemasql", description="Get da estrutura dos campos solicitados. campos=?,?,?,?")
 User Function REST03()
     local jReturn      := JsonObject():New()
@@ -373,7 +392,15 @@ User Function REST03()
     oRest:setResponse( jReturn )
 Return
 
-
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+Download do arquivo formato base64 [filtro: filent=?]
+@author  Jerry Junior
+@since   29/02/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
 @Get( endpoint="banco-conhecimento/base64/download/:objeto", description="Download do arquivo formato base64 [filtro: filent=?]")
 User Function REST04()
     local cReturn      := ""
@@ -472,6 +499,15 @@ User Function REST04()
 Return
 
 
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+Lista campos e valores de uma entidade pela chave. Filtro de indice= e/ou campos=?,?,?,?
+@author  Jerry Junior
+@since   29/02/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
 @Get( endpoint="banco-conhecimento/consulta/dados/:entidade/:chave", description="Lista campos e valores de uma entidade pela chave. Filtro de indice= e/ou campos=?,?,?,?")
 User Function REST05()
     local cReturn       := ""
@@ -523,6 +559,15 @@ User Function REST05()
     oRest:setResponse( jReturn )
 Return
 
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+Tratamento de erro
+@author  Jerry Junior
+@since   29/02/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
 User Function onError( oError as object )
     local cCodeTrace    := "900"
     local cFault        := '' as character
