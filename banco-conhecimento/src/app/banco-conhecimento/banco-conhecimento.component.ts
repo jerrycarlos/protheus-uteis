@@ -23,17 +23,17 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
   fieldsEntidade : Array<PoDynamicFormField> = new Array<PoDynamicFormField>();
   dadosEntidade : any = {};
   arrayDadosEntidade = new Array();
+  //arquivoexiste = false;
 
-
-  entidades: Array<any> = [{alias:'SB1', descricao:'Produtos'},{alias:'SC7', descricao:'Pedido de Compra'},{alias:'SF1', descricao:'Documento de Entrada'},{alias:'SF2', descricao:'Documento de Saída'}];
-  filterKeys: Array<string> = ['alias', 'descricao'];
+  entidades: Array<any> = [{entidade:'SB1', descricao:'Produtos'},{entidade:'SC7', descricao:'Pedido de Compra'},{entidade:'SF1', descricao:'Documento de Entrada'},{entidade:'SF2', descricao:'Documento de Saída'}];
+  filterKeys: Array<string> = ['entidade', 'descricao'];
   entidadeFiltrada: Array<any> = [];
 
   buttons: Array<PoButtonGroupItem> = [
-    { tooltip: 'Auto-Relacionar', action: this.showConsole.bind(this), icon: 'po-icon po-icon-link' },
+    /*{ tooltip: 'Auto-Relacionar', action: this.showConsole.bind(this), icon: 'po-icon po-icon-link' },
     { tooltip: 'Escolher Layout', action: this.showConsole.bind(this), icon: 'po-icon po-icon-device-desktop' },
     { tooltip: 'Visualizar Contrato', action: this.showConsole.bind(this), icon: 'po-icon po-icon-eye' },
-    { tooltip: 'Visualizar XML', action: this.showConsole.bind(this), icon: 'po-icon po-icon-xml' },
+    { tooltip: 'Visualizar XML', action: this.showConsole.bind(this), icon: 'po-icon po-icon-xml' },*/
     { tooltip: 'Confirmar', action: this.confirmar.bind(this), icon: 'po-icon po-icon-ok' }
   ];
 
@@ -49,7 +49,8 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
     {
       action: this.downloadFile.bind(this),
       icon: 'po-icon po-icon-download',
-      label: ''
+      label: '',
+      disabled: this.arquivoexiste(this),
     }
   ];
 
@@ -87,9 +88,18 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
     this.columns = this.getColumnsAC9();
     this.dadosAC9 = this.getColumnsAC9();
     this.columnsItens = this.getColumnsItens();
+    this.getEntidades();
     //this.getDadosAC9();
   }
   
+  arquivoexiste(item: any){
+    console.log(item.ACB_OBJETO);
+    if ( 'Arquivo não existe'.indexOf(item.ACB_OBJETO))
+        return true;
+    else
+      return false;
+  }
+
   showConsole(){
     console.log("teste");
   }
@@ -117,7 +127,7 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
       return;
     }
     console.log(this.entidadeFiltrada);
-    this.entidade = this.entidadeFiltrada[0].alias;
+    this.entidade = this.entidadeFiltrada[0].entidade;
     this.getDadosAC9();
   }
 
@@ -153,6 +163,11 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
       this.poNotification.warning(fields.data);
     }
     this.carregando = false;
+  }
+
+  async getEntidades(){
+    const entidades = await this.httpService.get(this.endpoint + 'consulta/entidades').toPromise() as any;
+    this.entidades = entidades.data;
   }
 
   async getFieldsEntidade(alias : string, chave : string){
@@ -207,8 +222,8 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
 
   getColumnsAC9(): Array<PoTableColumn> {
     return [
-      { property: 'AC9_FILIAL', label: 'Filial', type: 'string', width: '10%'},
-      { property: 'AC9_CODENT', label: 'Cod. Entidade', type: 'string', width: '15%'}
+      { property: 'AC9_FILIAL', label: 'Filial', type: 'string', width: '20%'},
+      { property: 'AC9_CODENT', label: 'Cod. Entidade', type: 'string', width: '35%'}
     ];
   }
 

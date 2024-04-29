@@ -9,7 +9,58 @@
 
 
 
+//-------------------------------------------------------------------
+/*/{Protheus.doc} REST01
+Get entidades vinculados ao banco de conhecimento
+@author  Jerry Junior
+@since   29/04/2024
+@version 1.0
+@type function
+/*/
+//-------------------------------------------------------------------
+@Get( endpoint="banco-conhecimento/consulta/entidades", description="Lista todas as tabelas que possuem vínculo com banco de conhecimento, retorna Alias e Descrição")
+User Function REST00()
+    local cQuery      := ""
+    local jReturn   := JsonObject():New()
+    local jData     := Nil
 
+    If ! oRest:setKeyHeaderResponse("Content-Type", "application/json")
+        Conout("Erro ao setar text na chave content-type")
+        If !oRest:appendKeyHeaderResponse("Content-Type", "application/json")
+            cRet := "Erro ao setar text na chave content-type"
+        EndIf
+    EndIf
+
+    cQuery += " SELECT DISTINCT X2_CHAVE, X2_NOME FROM " + RetSqlName('AC9') + " AC9 (nolock)"
+    cQuery += " CROSS APPLY (SELECT X2_CHAVE, X2_NOME FROM " + RetSqlName('SX2') + " WHERE D_E_L_E_T_='' AND X2_CHAVE=AC9_ENTIDA) AS X2"
+    cQuery += "  WHERE AC9.D_E_L_E_T_=''"
+    cQuery += "  AND AC9_ENTIDA<>''"
+    
+    if Select('QSX2') > 0
+        QSX2->(dbclosearea())
+    endif
+    
+    TcQuery cQuery New Alias 'QSX2'
+        
+    if QSX2->(Eof())
+        jReturn['code'] := "201"
+        jReturn['data'] := {}
+    else
+        jReturn['code'] := "200"
+        jReturn['data'] := {}
+        while QSX2->(!Eof())
+            jData := JsonObject():New()
+            jData['entidade'] := QSX2->X2_CHAVE
+            jData['descricao'] := Alltrim(QSX2->X2_NOME)
+            aAdd(jReturn['data'], jData)
+            FreeObj(jData)
+            QSX2->(dbSkip())
+        enddo
+    endif
+        
+    oRest:setResponse( jReturn )
+
+Return
 //-------------------------------------------------------------------
 /*/{Protheus.doc} REST01
 description

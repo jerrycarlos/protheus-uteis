@@ -23,7 +23,7 @@
                         </div>
                         <hr />
                         <div class="po-row" *ngFor="let entidade of entidadeFiltrada">
-                            <po-info class="po-md-4" p-label="Tabela" [p-value]="entidade.alias"> </po-info>
+                            <po-info class="po-md-4" p-label="Tabela" [p-value]="entidade.entidade"> </po-info>
                           
                             <po-info class="po-md-4" p-label="Descricao" [p-value]="entidade.descricao"> </po-info>
                           </div>
@@ -38,7 +38,7 @@
     <po-widget #container1 class="po-lg-12 po-mt-2" style="padding-top: -10px">
         <div class="po-row">
             <po-table #tableBanco id="tableBanco" p-show-more="true" p-container="border" p-sort="true" p-striped="true" [p-columns]="columns" [p-items]="dadosAC9" class="po-sm-12" p-container="shadow" p-auto-collapse="false" [p-hide-text-overflow]="false"
-            p-actions-right="true" [p-actions]="actions">
+            p-actions-right="true" [p-actions]="actions" [p-height]="600">
             <ng-template
                 p-table-row-template
                 let-rowItem
