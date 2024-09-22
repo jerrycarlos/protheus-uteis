@@ -198,12 +198,16 @@ Static Function atualizaIni()
     aEval(aIni, {|x| aAdd(aServer, x)}, 3)
     For i:=1 to Len(aServer)
         cCliente := aServer[i]
-        cServer  :=  GetPvProfString(cCliente, "server", "", cArqIni)
-        cPort    := GetPvProfString(cCliente, "port", "", cArqIni)
+        cServer :=  GetPvProfString(cCliente, "server", "", cArqIni)
+        cLogin := GetPvProfString(cCliente, "login", "", cArqIni)
+        cPassWord := GetPvProfString(cCliente, "senha", "", cArqIni)
+        cPort := GetPvProfString(cCliente, "port", "", cArqIni)
         aAdd(aColsSrv, {;
             cCliente,;
             cServer,;
-            cPort;
+            cPort,;
+            cLogin,;
+            cPassWord;
         })
     Next
     oBrwSrv:oData:aArray := aColsSrv
