@@ -84,9 +84,12 @@ User Function REST01()
     local aExtensao := {}
     local cExtensao := ''
     local cNomeArq  := ''
-    local cDirDoc   := GetNewPar("MV_DIRDOC") + '\co' + cEmpAnt
+    local cDirDoc   := GetNewPar("MV_DIRDOC") + 'co' + cEmpAnt
     local cDirArq   := cDirDoc
     local cFilEnt   := ''
+    local cPage := ""
+    local cPagesize := ""
+    local nQtdItens := 0
     jPathParams := oRest:getPathParamsRequest()
     jQueryString := oRest:getQueryRequest()
     cBody := oRest:getBodyRequest()
@@ -112,7 +115,7 @@ User Function REST01()
     if ( jQueryString <> Nil )
         cReturn += "Parâmetros capturados: [" + jQueryString:ToJSon() + "]"
         if jQueryString:hasProperty('campos')
-            aCampos := FWFormStruct(1, 'SB1', {|x| alltrim(x) $ jQueryString['campos']}):aFields
+            aCampos := FWFormStruct(1, jPathParams['entidade'], {|x| alltrim(x) $ jQueryString['campos']}):aFields
         endif
         
         if jQueryString:hasProperty('extensao')
@@ -121,6 +124,14 @@ User Function REST01()
         
         if jQueryString:hasProperty('nomearquivo')
             cNomeArq := jQueryString['nomearquivo']
+        endif
+
+        if jQueryString:hasProperty('page')
+            cPage := jQueryString['page']
+        endif
+
+        if jQueryString:hasProperty('pageSize')
+            cPagesize := jQueryString['pageSize']
         endif
 
         if jQueryString:hasProperty('filent')
@@ -140,6 +151,17 @@ User Function REST01()
         if !Empty(cFilEnt)
             cQuery += " AND AC9_FILIAL = '" + cFilEnt + "'"
         endif
+
+        cQuery += " ORDER BY R_E_C_N_O_"
+        if !Empty(cPage)
+            cQuery += " OFFSET (" + cPage + " - 1) * " + cPagesize + " rows"
+        endif
+
+        if !Empty(cPagesize)
+            cQuery += " FETCH NEXT " + cPagesize + " rows only"
+        endif
+
+
         
         if Select('QAC9') > 0
             QAC9->(dbclosearea())
@@ -147,13 +169,16 @@ User Function REST01()
         
         TcQuery cQuery New Alias 'QAC9'
         
-        jReturn['code'] := "201"
-        jReturn['data'] := {}
+        Count to nQtdItens
+        QAC9->(dbGotop())
+        //jReturn['code'] := "201"
+        jReturn['hasNext'] := .F.
+        jReturn['items'] := {}
         (cAlias)->(dbSetOrder(1))
         while QAC9->(!Eof())
             AC9->(DBGoTo(QAC9->RECNO))
             cAC9_CODENT := Alltrim(AC9->AC9_CODENT)
-            nPos := aScan(jReturn['data'], {|x| x['AC9_CODENT'] == cAC9_CODENT})
+            nPos := aScan(jReturn['items'], {|x| x['AC9_CODENT'] == cAC9_CODENT})
             jObjeto := JsonObject():New()
             jObjeto['ACB_CODOBJ'] := Alltrim(AC9->AC9_CODOBJ)
             jObjeto['ACB_OBJETO'] := ''
@@ -207,11 +232,13 @@ User Function REST01()
 
             //Se ja existir a entidade no jReturn, adiciona as infos do novo objeto
             if nPos > 0
-                aAdd(jReturn['data'][nPos]['objeto'], jObjeto)
+                aAdd(jReturn['items'][nPos]['objeto'], jObjeto)
             else//Cria uma nova entidade para o jReturn
-                jReturn['code'] := "200"
+                //jReturn['code'] := "200"
+                jReturn['hasNext'] := .T.
                 jData := JsonObject():New()
                 jData['AC9_FILIAL'] := AC9->AC9_FILIAL
+                jData['AC9_FILENT'] := AC9->AC9_FILENT
                 jData['AC9_CODENT'] := cAC9_CODENT
                 jData['diretorio'] := cDirArq
                 jData["objeto"] := {}
@@ -225,10 +252,14 @@ User Function REST01()
                     jCampo['valor'] := Posicione(cAlias, 1, AC9->(AC9_FILIAL+AC9_CODENT), alltrim(aCampo[3]))
                     aAdd(jData['campos'], jCampo)
                 Next
-                aAdd(jReturn['data'], jData)
+                aAdd(jReturn['items'], jData)
             endif
             QAC9->(dbSkip())
         enddo
+
+        if nQtdItens < 10
+            jReturn['hasNext'] := .F.
+        endif
         
     endif
 
@@ -508,7 +539,7 @@ Lista campos e valores de uma entidade pela chave. Filtro de indice= e/ou campos
 @type function
 /*/
 //-------------------------------------------------------------------
-@Get( endpoint="banco-conhecimento/consulta/dados/:entidade/:chave", description="Lista campos e valores de uma entidade pela chave. Filtro de indice= e/ou campos=?,?,?,?")
+@Get( endpoint="banco-conhecimento/consulta/dados/:entidade/:filent/:chave", description="Lista campos e valores de uma entidade pela chave. Filtro de indice= e/ou campos=?,?,?,?")
 User Function REST05()
     local cReturn       := ""
     local jQueryString  := Nil 
@@ -516,6 +547,7 @@ User Function REST05()
     local jBody         := Nil
     local cBody         := ""
     local cAlias        := ""
+    local cFilEnt       := PadL("", 2)
     local cChave        := ""
     local cCampos       := ""
     local jReturn       := JsonObject():New()
@@ -540,6 +572,9 @@ User Function REST05()
     
     if jPathParams <> Nil
         cAlias := jPathParams['entidade']
+        if !(cAlias $ "SC7|SC1|SE1")
+            cFilEnt := PadL(jPathParams['filent'], 2)
+        endif
         cChave := jPathParams['chave']
     endif
 
@@ -548,12 +583,12 @@ User Function REST05()
     endif
 
     oAlias := Entidade():New(cAlias)
-    If oAlias:BuscaRegistro(cChave)
+    If oAlias:BuscaRegistro(cFilEnt + cChave)
         jReturn['code'] := "200"
         jReturn['data'] := oAlias:GetStruct(cCampos)
     Else
         jReturn['code'] := "201"
-        jReturn['data'] := "Registro não encontrado na entidade seleciona: " + cAlias
+        jReturn['data'] := "Registro não encontrado na entidade selecionada: " + cAlias
     EndIf
 
     oRest:setResponse( jReturn )
@@ -644,7 +679,7 @@ Static Function convertVal(cCampo, xVal)
     ElseIf ValType(xVal) == "D"
         xRet := Transform(DtoS(xVal), "@R XXXX-XX-XX")
     Else
-        xRet := U_X3_CBOX(cCampo, xVal)
+        xRet := X3_CBOX(cCampo, xVal)
         If Empty(xRet)
             xRet := Alltrim(xVal)
         Endif    
@@ -671,7 +706,7 @@ Static Function convertTipo(cTipoADVPL, nDecimal)
 Return cTipoTS
 
 
-User Function X3_CBOX(cCampo, cChave)
+Static Function X3_CBOX(cCampo, cChave)
     Local cRet := ""
     Local cCombo := GetSx3Cache(cCampo,"X3_CBOX")
     //Em caso de combobox dinamica, exemplo: #U_OPCOES()
