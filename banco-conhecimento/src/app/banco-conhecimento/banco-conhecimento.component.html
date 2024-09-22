@@ -37,8 +37,12 @@
     <po-loading-overlay [hidden]="!carregando" [p-text]="textAguarde"> </po-loading-overlay>
     <po-widget #container1 class="po-lg-12 po-mt-2" style="padding-top: -10px">
         <div class="po-row">
-            <po-table #tableBanco id="tableBanco" p-show-more="true" p-container="border" p-sort="true" p-striped="true" [p-columns]="columns" [p-items]="dadosAC9" class="po-sm-12" p-container="shadow" p-auto-collapse="false" [p-hide-text-overflow]="false"
-            p-actions-right="true" [p-actions]="actions" [p-height]="600">
+            <po-table #tableBanco id="tableBanco" p-show-more="true" p-container="border" p-sort="true" p-striped="true" [p-columns]="columns" class="po-sm-12" p-container="shadow" p-auto-collapse="false" [p-hide-text-overflow]="false"
+            p-actions-right="true" [p-actions]="actions" [p-height]="600"
+            [p-items]="items" 
+            [p-service-api]="urlApi"
+            [p-show-more-disabled]="showMoreDisabled"
+            >
             <ng-template
                 p-table-row-template
                 let-rowItem

@@ -16,7 +16,9 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
   @ViewChild('inputSearch', { static: true }) inputSearch!: PoSearchComponent;
 
   override carregando = false;
+  showMoreDisabled: boolean = false;
   textAguarde: string = '';
+  items: Array<any> = [];
   columns: Array<PoTableColumn> = new Array<PoTableColumn>();
   dadosAC9: any;
   columnsItens: Array<PoTableColumn> = new Array<PoTableColumn>();
@@ -28,7 +30,7 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
   entidades: Array<any> = [{entidade:'SB1', descricao:'Produtos'},{entidade:'SC7', descricao:'Pedido de Compra'},{entidade:'SF1', descricao:'Documento de Entrada'},{entidade:'SF2', descricao:'Documento de Saída'}];
   filterKeys: Array<string> = ['entidade', 'descricao'];
   entidadeFiltrada: Array<any> = [];
-
+  urlApi:string = ''
   buttons: Array<PoButtonGroupItem> = [
     /*{ tooltip: 'Auto-Relacionar', action: this.showConsole.bind(this), icon: 'po-icon po-icon-link' },
     { tooltip: 'Escolher Layout', action: this.showConsole.bind(this), icon: 'po-icon po-icon-device-desktop' },
@@ -132,28 +134,22 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
   }
 
   async getDadosAC9(){
-    let url = this.endpoint + 'consulta/' + this.entidade;
+    let url = this.httpService.getUrlApi() + this.endpoint + 'consulta/' + this.entidade + '?filent=12';
     console.log(url);
-    //this.setDadosNota();
-    this.carregando = true;
-    this.httpService.get(url).subscribe(
-      resource => {
-        this.dadosAC9 = resource.data;
-      },
-      error => {
-        console.log(error);
-        this.carregando = false;
-      },
-      () => {
-        this.carregando = false;
-      }
-    );
+    this.urlApi = url;
+    
+  }
 
-    this.carregando = false;
+  async showMore() {
+    this.carregando = true;
+    setTimeout(() => {
+      this.getDadosAC9();
+      this.carregando = false;
+    }, 4000);
   }
 
   async abreRegistro(item:any){
-    let fields = await this.getFieldsEntidade(this.entidade, item.AC9_FILIAL + item.AC9_CODENT);
+    let fields = await this.getFieldsEntidade(this.entidade, item.AC9_FILENT, item.AC9_CODENT);
     if (fields.code == '200'){
       for(const d of this.arrayDadosEntidade){
         this.dadosEntidade[d.campo] = d.valor;
@@ -170,11 +166,11 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
     this.entidades = entidades.data;
   }
 
-  async getFieldsEntidade(alias : string, chave : string){
+  async getFieldsEntidade(alias : string, filent : string, chave : string){
     let formFields = Array<PoDynamicFormField>();
     let fieldAux : PoDynamicFormField;
     this.carregando = true;
-    const fields = await this.httpService.get(this.endpoint + 'consulta/dados/' + this.entidade + '/' + chave).toPromise() as any;
+    const fields = await this.httpService.get(this.endpoint + 'consulta/dados/' + this.entidade + '/' + filent + '/' + chave).toPromise() as any;
     console.log(fields);
     for(const d of fields.data){
       fieldAux = {
@@ -222,7 +218,8 @@ export class BancoConhecimentoComponent extends BaseComponent implements OnInit{
 
   getColumnsAC9(): Array<PoTableColumn> {
     return [
-      { property: 'AC9_FILIAL', label: 'Filial', type: 'string', width: '20%'},
+      { property: 'AC9_FILIAL', label: 'Filial Objeto', type: 'string', width: '20%'},
+      { property: 'AC9_FILENT', label: 'Filial Registro', type: 'string', width: '20%'},
       { property: 'AC9_CODENT', label: 'Cod. Entidade', type: 'string', width: '35%'}
     ];
   }

@@ -4,7 +4,7 @@
 import jsonconfig from '../assets/appConfig_tst.json';
 export const environment = {
   production: false,
-  urlApi: jsonconfig['serverBackend']
+  urlApi: jsonconfig['serverBackend2']
 };
 
 /*

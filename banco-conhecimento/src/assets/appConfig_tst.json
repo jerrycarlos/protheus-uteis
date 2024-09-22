@@ -1,7 +1,7 @@
 {
     "name": "Protheus",
     "version": "12.23.0",
-    "serverBackend2": "http://192.168.1.225:4091/rest",
+    "serverBackend2": "http://192.168.1.230:8087/rest",
     "serverBackend": "http://localhost:9999/rest99",
     "restEntryPoint": "rest",
     "versionAPI": "",

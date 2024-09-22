@@ -27,6 +27,10 @@ export class HttpService {
     );
   }
 
+  getUrlApi(){
+    return environment.urlApi;
+  }
+
   post(path: string, body: any): Observable<[]> {
     return this.http.post<[]>(environment.urlApi + path, body, /*{ headers: this.headers}*/).pipe(
       catchError(this.handleError<[]>('post', path))
