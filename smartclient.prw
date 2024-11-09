@@ -39,6 +39,7 @@ Return
 
 User Function USMART2()
     Local oDlg, oLayer	:= FWLayer():New()
+    Local nX, nY, i
     Private cArqIni := GetRemoteIniName()
     Private cSmartClient := "C:\Users\jerry\OneDrive\TRABALHO\Totvs\SMARTCLIENT_2310\smartclient.exe"
     Private aIni := {}, aComboFil := {}, aAmbiente := {""}
@@ -94,16 +95,22 @@ User Function USMART2()
     
 
 
-    cPrograma := "SIGAMDI          "
+    cPrograma := Space(20)
     @ 001,001 SAY "Programa Inicial " PIXEL OF oPanel03      
     oGet3 := TGet():New( 006, 001, { | u | If( PCount() == 0, cPrograma, cPrograma := u ) },oPanel03, 060, 010, "!@",, 0, 16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cPrograma",,,,.T.  )
 
-    TButton():New( 001, 070, "Abrir"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], cPrograma)}, 50,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-    TButton():New( 001, 150, "Atualiza INI/Grid"  ,oPanel03,{|| atualizaIni() }, 50,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 070, "Abrir"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], cPrograma)}, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 110, "Atualiza INI/Grid"  ,oPanel03,{|| atualizaIni() }, 50,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 
-    oGet4 := TGet():New( 001, 210, { | u | If( PCount() == 0, cServer, cServer := u ) },oPanel03, 80, 010, "!@",, 0, 16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cServer",,,,.T.  )
+    oGet4 := TGet():New( 006, 170, { | u | If( PCount() == 0, cServer, cServer := u ) },oPanel03, 80, 010, "!@",, 0, 16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cServer",,,,.T.  )
     oGet4:BLDBLCLICK := {|| CopytoClipboard(cServer)}
     
+    TButton():New( 004, 270, "SIGAMDI"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "SIGAMDI") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 310, "SIGACFG"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "SIGACFG") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 350, "APSDU"    ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "APSDU") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 390, "UAPSDU"   ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_UAPSDU") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 430, "CRIACOMP" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_CRIACOMP") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 470, "SOBECOMP" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_SOBECOMP") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
     //oGet5 := TGet():New( 001, 330, { | u | If( PCount() == 0, cPassWord, cPassWord := u ) },oPanel03, 80, 010, "!@",, 0, 16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cPassWord",,,,.T.  )
 	//oGet5:BLDBLCLICK := {|| CopytoClipboard(cPassword)}
 
@@ -194,6 +201,7 @@ Static Function atualizaIni()
     Local cPort := ""
     Local aServer := {}
     Local aIni := GetINISessions(cArqIni)
+    Local i
     aServer := {}
     aEval(aIni, {|x| aAdd(aServer, x)}, 3)
     For i:=1 to Len(aServer)
@@ -270,8 +278,15 @@ Static Function atualizaDados(cCliente)
 Return
 
 Static Function abreSmart(cSmartClient, cConexao, cAmbiente, cPrograma)
+    Local cSenha := oBrwSrv:oData:aArray[oBrwSrv:nAt][5]
 
-    ShellExecute( "Open", cSmartClient, " -m -c=" + Alltrim(cConexao) + " -e=" + Alltrim(cAmbiente) + " -p=" + Alltrim(cPrograma), "C:\", 1)
+    CopytoClipboard(cSenha)
+
+    If Empty(cPrograma)
+        FWAlertWarning("Informar o programa inicial para abrir","ATENCAO")
+    Else
+        ShellExecute( "Open", cSmartClient, " -m -c=" + Alltrim(cConexao) + " -e=" + Alltrim(cAmbiente) + " -p=" + Alltrim(cPrograma), "C:\", 1)
+    EndIf
 
 Return
 
