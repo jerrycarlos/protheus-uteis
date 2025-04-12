@@ -41,7 +41,7 @@ User Function USMART2()
     Local oDlg, oLayer	:= FWLayer():New()
     Local nX, nY, i
     Private cArqIni := GetRemoteIniName()
-    Private cSmartClient := "C:\Users\jerry\OneDrive\TRABALHO\Totvs\SMARTCLIENT_2310\smartclient.exe"
+    Private cSmartClient := "F:\OneDrive\TRABALHO\Totvs\SMARTCLIENT_2310\smartclient.exe"
     Private aIni := {}, aComboFil := {}, aAmbiente := {""}
     Private cServer := ""
     Private cPort := ""
@@ -105,12 +105,13 @@ User Function USMART2()
     oGet4 := TGet():New( 006, 170, { | u | If( PCount() == 0, cServer, cServer := u ) },oPanel03, 80, 010, "!@",, 0, 16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cServer",,,,.T.  )
     oGet4:BLDBLCLICK := {|| CopytoClipboard(cServer)}
     
-    TButton():New( 004, 270, "SIGAMDI"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "SIGAMDI") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-    TButton():New( 004, 310, "SIGACFG"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "SIGACFG") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-    TButton():New( 004, 350, "APSDU"    ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "APSDU") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-    TButton():New( 004, 390, "UAPSDU"   ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_UAPSDU") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-    TButton():New( 004, 430, "CRIACOMP" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_CRIACOMP") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
-    TButton():New( 004, 470, "SOBECOMP" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_SOBECOMP") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 265, "SIGAMDI"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "SIGAMDI") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 305, "SIGACFG"  ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "SIGACFG") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 345, "APSDU"    ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "APSDU") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 385, "UAPSDU"   ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_UAPSDU") }, 30,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 425, "CRIACOMP" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_CRIACOMP") }, 35,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 465, "SOBECOMP" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_SOBECOMP") }, 35,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+    TButton():New( 004, 505, "UMONITOR" ,oPanel03,{|| abreSmart(cSmartClient, oBrwSrv:oData:aArray[oBrwSrv:nAt][1], oBrwEnv:oData:aArray[oBrwEnv:nAt][1], "U_UMONITOR") }, 35,15,,,.F.,.T.,.F.,,.F.,,,.F. )
     //oGet5 := TGet():New( 001, 330, { | u | If( PCount() == 0, cPassWord, cPassWord := u ) },oPanel03, 80, 010, "!@",, 0, 16777215,,.F.,,.T.,,.F.,,.F.,.F.,,.F.,.F. ,,"cPassWord",,,,.T.  )
 	//oGet5:BLDBLCLICK := {|| CopytoClipboard(cPassword)}
 
@@ -225,7 +226,7 @@ Static Function atualizaIni()
 Return
 
 User Function USMART3()
-    Local cPathSmart := "C:\Users\jerry\OneDrive\TRABALHO\Totvs\SMARTCLIENT_2310\"
+    Local cPathSmart := "F:\OneDrive\TRABALHO\Totvs\SMARTCLIENT_2310\"
     Private cArqIni := cPathSmart + "smartclient.ini"
     Private cSmartClient := cPathSmart + "smartclient.exe"
     Private aIni := {}, aComboFil := {}, aAmbiente := {""}
